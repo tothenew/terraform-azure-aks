@@ -1,13 +1,14 @@
-module "aks_main" {
+module "aks" {
 
   source  = "git::https://github.com/AshwitaPal/Azure-AKS.git"
+  #  source = "../"
   resource_group          = "RG_for_AKS"
   location                = "eastus2"
   vm_size                 = "Standard_DS2_v2"
   virtual_network_address = "10.0.0.0/8"
   subnet_address          = "10.0.1.0/16"
   
-  create_additional_node_pool = true
+  create_additional_node_pool = false
 
   # if create_additional_node_pool = true then Add node pool configurations
 
