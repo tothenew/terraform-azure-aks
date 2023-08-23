@@ -1,6 +1,0 @@
-common:
-  project_name_prefix: "generic"
-  project: "Generic"
-  tags:
-    "Feature": "aks-services"
-    "Project": "Generic"
