@@ -1,19 +1,19 @@
 variable "resource_group" {
   description = "(Required) Specifies the Resource Group where the Managed Kubernetes Cluster should exist."
   type        = string
-  default = "Resource_group"
+  default     = "Resource_group"
 }
 
 variable "location" {
   description = "(Required) Specifies the supported Azure location where the resource exists."
   type        = string
-  default = "Central India"
+  default     = "Central India"
 }
 
 variable "prefix" {
   description = "(Required) Base name used by resources (cluster name, main service and others)."
   type        = string
-  default = "new_kubernetes"
+  default     = "new_kubernetes"
 }
 
 variable "k8s_version" {
@@ -25,13 +25,13 @@ variable "k8s_version" {
 variable "vm_size" {
   description = "(Required) The size of the Virtual Machine, such as Standard_DS2_v2."
   type        = string
-  default = "Standard_DS2_v2"
+  default     = "Standard_DS2_v2"
 }
 
 variable "auto_scaling_default_node" {
   description = "(Optional) Kubernetes Auto Scaler must be enabled for this main pool"
   type        = bool
-  default       = true
+  default     = true
 }
 
 variable "availability_zones" {
@@ -43,25 +43,25 @@ variable "availability_zones" {
 variable "node_count" {
   description = "(Optional) The initial number of nodes which should exist in this Node Pool. If specified this must be between 1 and 100 and between min_count and max_count."
   type        = string
-  default       = 1
+  default     = 1
 }
 
 variable "node_min_count" {
   description = "(Required) The minimum number of nodes which should exist in this Node Pool. If specified this must be between 1 and 100."
   type        = number
-  default = 1
+  default     = 1
 }
 
 variable "node_max_count" {
   description = "(Required) The maximum number of nodes which should exist in this Node Pool. If specified this must be between 1 and 100."
   type        = number
-  default = 10
+  default     = 10
 }
 
 variable "max_pods" {
   description = "(Optional) The maximum number of pods that can run on each agent."
   type        = number
-  default       = 50
+  default     = 50
 }
 
 variable "network_plugin" {
@@ -72,44 +72,44 @@ variable "network_plugin" {
 variable "service_cidr" {
   description = "(Optional) The Network Range used by the Kubernetes service.Changing this forces a new resource to be created."
   type        = string
-  default = "10.0.0.0/16"
+  default     = "10.0.0.0/16"
 }
 
 variable "dns_service_ip" {
   description = "(Optional) IP address within the Kubernetes service address range that will be used by cluster service discovery (kube-dns)."
   type        = string
-  default = "10.0.0.10"
+  default     = "10.0.0.10"
 }
 
 variable "pod_cidr" {
   description = "(Optional) The CIDR to use for pod IP addresses."
   type        = string
-  default = "10.244.0.0/16"
+  default     = "10.244.0.0/16"
 }
 
 variable "dns_prefix" {
-  type = string
+  type    = string
   default = "k8stest"
 }
 
 variable "virtual_network_name" {
   description = "Virtual Network name"
-  default = "vnet-k8"
+  default     = "vnet-k8"
 }
 
 variable "subnet_network_name" {
   description = "Subnet netwotk name"
-  default = "subnet-k8s"
+  default     = "subnet-k8s"
 }
 
 variable "virtual_network_address" {
   description = "Virtual network address"
-  default = "10.0.0.0/8"
+  default     = "10.0.0.0/8"
 }
 
 variable "subnet_address" {
   description = "Subnet address"
-  default = "10.0.1.0/16"
+  default     = "10.0.1.0/16"
 
 }
 
@@ -119,7 +119,7 @@ variable "sku_tier" {
   type        = string
 
   validation {
-    condition = contains( ["Free", "Paid"], var.sku_tier)
+    condition     = contains(["Free", "Paid"], var.sku_tier)
     error_message = "The sku tier is invalid."
   }
 }
@@ -131,8 +131,8 @@ variable "tags" {
 
 variable "name_prefix" {
   description = "Used in tags cluster and nodes"
-  type = string
-  default = "vnet"
+  type        = string
+  default     = "vnet"
 }
 
 variable "default_tags" {
@@ -147,8 +147,8 @@ variable "default_tags" {
 variable "common_tags" {
   type        = map(string)
   description = "A map to add common tags to all the resources"
-  default     = {
-    Project   = "VNet"
+  default = {
+    Project    = "VNet"
     Managed-By = "TTN"
   }
 }
@@ -181,24 +181,24 @@ variable "additional_node_pools" {
       taints              = []
     }
   }
- }
+}
 
 variable "create_additional_node_pool" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "ingress_application_gateway" {
   description = "Specifies the Application Gateway Ingress Controller addon configuration."
-  type        = object({
+  type = object({
     enabled      = bool
     gateway_id   = string
     gateway_name = string
     subnet_cidr  = string
     subnet_id    = string
   })
-  default     = {
-    enabled      = false           
+  default = {
+    enabled      = false
     gateway_id   = null
     gateway_name = null
     subnet_cidr  = null
