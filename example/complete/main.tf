@@ -1,6 +1,6 @@
 module "aks_main" {
 
-  source                  = "git::https://https://github.com/tothenew/terraform-azure-aks.git?ref=aks-v1"
+  source                  = "git::https:github.com/tothenew/terraform-azure-aks.git"
   resource_group          = "RG_for_AKS"
   location                = "eastus2"
   vm_size                 = "Standard_DS2_v2"
