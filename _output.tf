@@ -6,6 +6,6 @@ output "kube_config_file" {
 
 output "cluster_name" {
   description = "Cluster name to be used in the context of kubectl"
-  value       = azurerm_kubernetes_cluster.cluster.name
+  value       = azurerm_kubernetes_cluster.aks_cluster.name
 }
 

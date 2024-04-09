@@ -22,46 +22,8 @@ variable "k8s_version" {
   default     = "1.26"
 }
 
-variable "vm_size" {
-  description = "(Required) The size of the Virtual Machine, such as Standard_DS2_v2."
-  type        = string
-  default     = "Standard_DS2_v2"
-}
-
-variable "auto_scaling_default_node" {
-  description = "(Optional) Kubernetes Auto Scaler must be enabled for this main pool"
-  type        = bool
-  default     = true
-}
-
-variable "availability_zones" {
-  description = "(Optional) A list of Availability Zones across which the Node Pool should be spread. Changing this forces a new resource to be created."
-  type        = list(string)
-  default     = ["1", "2", "3"]
-}
-
-variable "node_count" {
-  description = "(Optional) The initial number of nodes which should exist in this Node Pool. If specified this must be between 1 and 100 and between min_count and max_count."
-  type        = string
-  default     = 1
-}
-
-variable "node_min_count" {
-  description = "(Required) The minimum number of nodes which should exist in this Node Pool. If specified this must be between 1 and 100."
-  type        = number
-  default     = 1
-}
-
-variable "node_max_count" {
-  description = "(Required) The maximum number of nodes which should exist in this Node Pool. If specified this must be between 1 and 100."
-  type        = number
-  default     = 10
-}
-
-variable "max_pods" {
-  description = "(Optional) The maximum number of pods that can run on each agent."
-  type        = number
-  default     = 50
+variable "vnet_subnet_id" {
+  type = string
 }
 
 variable "network_plugin" {
@@ -70,49 +32,30 @@ variable "network_plugin" {
 }
 
 variable "service_cidr" {
-  description = "(Optional) The Network Range used by the Kubernetes service.Changing this forces a new resource to be created."
-  type        = string
-  default     = "10.0.0.0/16"
+  type = string
 }
 
-variable "dns_service_ip" {
-  description = "(Optional) IP address within the Kubernetes service address range that will be used by cluster service discovery (kube-dns)."
+variable "support_plan" {
   type        = string
-  default     = "10.0.0.10"
+  default     = "KubernetesOfficial"
+  description = "The support plan which should be used for this Kubernetes Cluster. Possible values are `KubernetesOfficial` and `AKSLongTermSupport`."
 }
 
-variable "pod_cidr" {
-  description = "(Optional) The CIDR to use for pod IP addresses."
+variable "automatic_channel_upgrade" {
   type        = string
-  default     = "10.244.0.0/16"
+  default     = null
+  description = "(Optional) The upgrade channel for this Kubernetes Cluster. Possible values are `patch`, `rapid`, `node-image` and `stable`. By default automatic-upgrades are turned off."
 }
 
+variable "azure_policy_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Azure Policy Addon."
+}
 variable "dns_prefix" {
   type    = string
   default = "k8stest"
 }
-
-variable "virtual_network_name" {
-  description = "Virtual Network name"
-  default     = "vnet-k8"
-}
-
-variable "subnet_network_name" {
-  description = "Subnet netwotk name"
-  default     = "subnet-k8s"
-}
-
-variable "virtual_network_address" {
-  description = "Virtual network address"
-  default     = "10.0.0.0/8"
-}
-
-variable "subnet_address" {
-  description = "Subnet address"
-  default     = "10.0.1.0/16"
-
-}
-
 variable "sku_tier" {
   description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free and Paid (which includes the Uptime SLA). Defaults to Free."
   default     = "Free"
@@ -132,15 +75,15 @@ variable "tags" {
 variable "name_prefix" {
   description = "Used in tags cluster and nodes"
   type        = string
-  default     = "vnet"
+  default     = "AKS"
 }
 
 variable "default_tags" {
   type        = map(string)
   description = "A map to add common tags to all the resources"
   default = {
-    "Scope" : "VNET"
-    "CreatedBy" : "Terraform"
+    "Scope" : "AKS"
+    "CreatedBy" : "Terraform" 
   }
 }
 
@@ -148,7 +91,7 @@ variable "common_tags" {
   type        = map(string)
   description = "A map to add common tags to all the resources"
   default = {
-    Project    = "VNet"
+    Project    = "AKS"
     Managed-By = "TTN"
   }
 }
@@ -204,4 +147,106 @@ variable "ingress_application_gateway" {
     subnet_cidr  = null
     subnet_id    = null
   }
+}
+
+variable "load_balancer_profile_enabled" {
+  type        = bool
+  default     = false
+  description = "(Optional) Enable a load_balancer_profile block. This can only be used when load_balancer_sku is set to `standard`."
+  nullable    = false
+}
+
+variable "load_balancer_sku" {
+  type        = string
+  default     = "standard"
+  description = "(Optional) Specifies the SKU of the Load Balancer used for this Kubernetes Cluster. Possible values are `basic` and `standard`. Defaults to `standard`."
+}
+
+variable "load_balancer_profile_managed_outbound_ip_count" {
+  type        = number
+  default     = null
+  description = "(Optional) Count of desired managed outbound IPs for the cluster load balancer. Must be between `1` and `100` inclusive"
+}
+
+variable "load_balancer_profile_outbound_ip_prefix_ids" {
+  type        = set(string)
+  default     = null
+  description = "(Optional) The ID of the outbound Public IP Address Prefixes which should be used for the cluster load balancer."
+}
+
+variable "outbound_type" {
+  description = "The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are `loadBalancer` and `userDefinedRouting`."
+  type        = string
+  default     = "loadBalancer"
+}
+
+variable "aks_pod_cidr" {
+  description = "CIDR used by pods when network plugin is set to `kubenet`."
+  type        = string
+  default     = "172.17.0.0/16"
+}
+
+variable "default_node_pool" {
+  description = "Default node pool configuration"
+  type = object({
+    name                   = optional(string, "default")
+    node_count             = optional(number, 1)
+    vm_size                = optional(string, "Standard_D2_v3")
+    os_type                = optional(string, "Linux")
+    workload_runtime       = optional(string, null)
+    zones                  = optional(list(number), [1, 2])
+    enable_auto_scaling    = optional(bool, false)
+    min_count              = optional(number, 1)
+    max_count              = optional(number, 10)
+    type                   = optional(string, "VirtualMachineScaleSets")
+    node_labels            = optional(map(any), null)
+    orchestrator_version   = optional(string, null)
+    priority               = optional(string, null)
+    enable_host_encryption = optional(bool, null)
+    eviction_policy        = optional(string, null)
+    max_pods               = optional(number, 30)
+    os_disk_type           = optional(string, "Managed")
+    os_disk_size_gb        = optional(number, 128)
+    enable_node_public_ip  = optional(bool, false)
+    scale_down_mode        = optional(string, "Delete")
+  })
+  default = {}
+}
+
+variable "auto_scaler_profile" {
+  description = "Configuration of `auto_scaler_profile` block object"
+  type = object({
+    balance_similar_node_groups      = optional(bool, false)
+    expander                         = optional(string, "random")
+    max_graceful_termination_sec     = optional(number, 600)
+    max_node_provisioning_time       = optional(string, "15m")
+    max_unready_nodes                = optional(number, 3)
+    max_unready_percentage           = optional(number, 45)
+    new_pod_scale_up_delay           = optional(string, "10s")
+    scale_down_delay_after_add       = optional(string, "10m")
+    scale_down_delay_after_delete    = optional(string, "10s")
+    scale_down_delay_after_failure   = optional(string, "3m")
+    scan_interval                    = optional(string, "10s")
+    scale_down_unneeded              = optional(string, "10m")
+    scale_down_unready               = optional(string, "20m")
+    scale_down_utilization_threshold = optional(number, 0.5)
+    empty_bulk_delete_max            = optional(number, 10)
+    skip_nodes_with_local_storage    = optional(bool, true)
+    skip_nodes_with_system_pods      = optional(bool, true)
+  })
+  default = null
+}
+
+variable "oms_log_analytics_workspace_id" {
+  description = "The ID of the Log Analytics Workspace used to send OMS logs"
+  type        = string
+}
+
+variable "key_vault_secrets_provider" {
+  description = "Enable AKS built-in Key Vault secrets provider. If enabled, an identity is created by the AKS itself and exported from this module."
+  type = object({
+    secret_rotation_enabled  = optional(bool, false)
+    secret_rotation_interval = optional(string, "")
+  })
+  default = null
 }
