@@ -68,6 +68,7 @@ module "vnet" {
     }
   }
 }
+
 module "aks_main" {
 
   source                      = "../.."
@@ -76,7 +77,7 @@ module "aks_main" {
   vnet_subnet_id              = module.vnet.subnet_ids["subnet1"] 
   service_cidr                = "10.41.16.0/22"
 
-  oms_log_analytics_workspace_id = module.log_analytics.workspace_id
+  # oms_log_analytics_workspace_id = module.log_analytics.workspace_id
 
 
   create_additional_node_pool = true

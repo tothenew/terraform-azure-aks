@@ -1,7 +1,7 @@
 variable "resource_group" {
   description = "(Required) Specifies the Resource Group where the Managed Kubernetes Cluster should exist."
   type        = string
-  default     = "Resource_group"
+  default     = "test"
 }
 
 variable "location" {
@@ -237,10 +237,10 @@ variable "auto_scaler_profile" {
   default = null
 }
 
-variable "oms_log_analytics_workspace_id" {
-  description = "The ID of the Log Analytics Workspace used to send OMS logs"
-  type        = string
-}
+# variable "oms_log_analytics_workspace_id" {
+#   description = "The ID of the Log Analytics Workspace used to send OMS logs"
+#   type        = string
+# }
 
 variable "key_vault_secrets_provider" {
   description = "Enable AKS built-in Key Vault secrets provider. If enabled, an identity is created by the AKS itself and exported from this module."

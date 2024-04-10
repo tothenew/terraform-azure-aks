@@ -57,9 +57,9 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     type = "SystemAssigned"
   }
 
-  oms_agent {
-    log_analytics_workspace_id = var.oms_log_analytics_workspace_id
-  }
+  # oms_agent {
+  #   log_analytics_workspace_id = var.oms_log_analytics_workspace_id
+  # }
 
   network_profile {
     network_plugin     = var.network_plugin
