@@ -1,13 +1,18 @@
 resource "azurerm_kubernetes_cluster" "aks_cluster" {
-  name                = var.prefix
-  resource_group_name = var.resource_group
-  location            = var.location
-  dns_prefix          = var.dns_prefix
-  kubernetes_version  = var.k8s_version
-  sku_tier            = var.sku_tier
-  support_plan        = var.support_plan
-  automatic_channel_upgrade  = var.automatic_channel_upgrade
-  azure_policy_enabled       = var.azure_policy_enabled
+  name                             = var.prefix
+  resource_group_name              = var.resource_group
+  location                         = var.location
+  dns_prefix                       = var.dns_prefix
+  kubernetes_version               = var.k8s_version
+  sku_tier                         = var.sku_tier
+  support_plan                     = var.support_plan
+  automatic_channel_upgrade        = var.automatic_channel_upgrade
+  azure_policy_enabled             = var.azure_policy_enabled
+  private_cluster_enabled          = var.private_cluster_enabled
+  private_dns_zone_id              = var.private_cluster_enabled ? local.private_dns_zone : null
+  node_resource_group              = var.node_resource_group
+  oidc_issuer_enabled              = var.oidc_issuer_enabled
+  http_application_routing_enabled = var.http_application_routing_enabled
 
   default_node_pool {
     name                = local.default_node_pool.name
@@ -24,11 +29,11 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     vnet_subnet_id      = local.default_node_pool.vnet_subnet_id
     node_labels         = local.default_node_pool.node_labels
     scale_down_mode     = local.default_node_pool.scale_down_mode
-    
+
     tags = merge(var.default_tags, var.common_tags, tomap({
-    "Name" : "${var.name_prefix}",
-    "Environment" : "Dev" 
-  }))
+      "Name" : "${var.name_prefix}",
+      "Environment" : "Dev"
+    }))
   }
 
   dynamic "auto_scaler_profile" {
@@ -62,14 +67,14 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   # }
 
   network_profile {
-    network_plugin     = var.network_plugin
-    network_policy     = var.network_plugin == "azure" ? "azure" : null 
-    network_mode       = var.network_plugin == "azure" ? "transparent" : null
-    dns_service_ip     = cidrhost(var.service_cidr, 10)
-    service_cidr       = var.service_cidr 
-    load_balancer_sku  = var.load_balancer_sku 
-    outbound_type      = var.outbound_type
-    pod_cidr           = var.network_plugin == "kubenet" ? var.aks_pod_cidr : null
+    network_plugin    = var.network_plugin
+    network_policy    = var.network_plugin == "azure" ? "azure" : null
+    network_mode      = var.network_plugin == "azure" ? "transparent" : null
+    dns_service_ip    = cidrhost(var.service_cidr, 10)
+    service_cidr      = var.service_cidr
+    load_balancer_sku = var.load_balancer_sku
+    outbound_type     = var.outbound_type
+    pod_cidr          = var.network_plugin == "kubenet" ? var.aks_pod_cidr : null
     load_balancer_profile {
       managed_outbound_ip_count = var.load_balancer_profile_managed_outbound_ip_count
       outbound_ip_prefix_ids    = var.load_balancer_profile_outbound_ip_prefix_ids
@@ -85,19 +90,29 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
 
-  dynamic "ingress_application_gateway" {
-    for_each = try(var.ingress_application_gateway.gateway_id, null) == null ? [] : [1]
+  # dynamic "ingress_application_gateway" {
+  #   for_each = try(var.ingress_application_gateway.gateway_id, null) == null ? [] : [1]
 
+  #   content {
+  #     gateway_id  = var.ingress_application_gateway.gateway_id
+  #     subnet_cidr = var.ingress_application_gateway.subnet_cidr
+  #     subnet_id   = var.ingress_application_gateway.subnet_id
+  #   }
+  # }
+
+  dynamic "http_proxy_config" {
+    for_each = var.aks_http_proxy_settings != null ? ["enabled"] : []
     content {
-      gateway_id  = var.ingress_application_gateway.gateway_id
-      subnet_cidr = var.ingress_application_gateway.subnet_cidr
-      subnet_id   = var.ingress_application_gateway.subnet_id
+      http_proxy  = var.aks_http_proxy_settings.http_proxy_url
+      https_proxy = var.aks_http_proxy_settings.https_proxy_url
+      no_proxy    = distinct(flatten(concat(local.default_no_proxy_url_list, var.aks_http_proxy_settings.no_proxy_url_list)))
+      trusted_ca  = var.aks_http_proxy_settings.trusted_ca
     }
   }
 
   tags = merge(var.default_tags, var.common_tags, tomap({
     "Name" : "${var.name_prefix}",
-    "Environment" : "Dev" 
+    "Environment" : "Dev"
   }))
 }
 
@@ -132,11 +147,10 @@ resource "azurerm_kubernetes_cluster_node_pool" "aks" {
   max_pods            = each.value.max_pods
   node_labels         = each.value.node_labels
   node_taints         = each.value.taints
-  vnet_subnet_id      = var.vnet_subnet_id 
+  vnet_subnet_id      = var.vnet_subnet_id
 
   tags = merge(var.default_tags, var.common_tags, {
     "Name" = "${var.name_prefix}-repo",
     "Environment" : "Dev"
   })
 }
-

@@ -8,10 +8,10 @@ resource "azurerm_resource_group" "rg" {
 }
 
 module "log_analytics" {
-  source = "git::https://github.com/tothenew/terraform-azure-loganalytics.git"
+  source                  = "git::https://github.com/tothenew/terraform-azure-loganalytics.git"
   workspace_name          = "devspecialtest-log"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  resource_group_name     = azurerm_resource_group.rg.name
+  location                = azurerm_resource_group.rg.location
   diagnostic_setting_name = "devspeciattest-log-diagnostic-setting"
 
   diagnostic_setting_enabled_metrics = {
@@ -61,7 +61,7 @@ module "vnet" {
   subnets = {
     "subnet1" = {
       address_prefixes           = ["10.41.1.0/24"]
-      associate_with_route_table = false 
+      associate_with_route_table = false
       is_natgateway              = false
       is_nsg                     = true
       service_delegation         = false
@@ -71,11 +71,12 @@ module "vnet" {
 
 module "aks_main" {
 
-  source                      = "../.."
-  resource_group              = azurerm_resource_group.rg.name
-  location                    = azurerm_resource_group.rg.location
-  vnet_subnet_id              = module.vnet.subnet_ids["subnet1"] 
-  service_cidr                = "10.41.16.0/22"
+  source             = "../.."
+  resource_group     = azurerm_resource_group.rg.name
+  location           = azurerm_resource_group.rg.location
+  vnet_subnet_id     = module.vnet.subnet_ids["subnet1"]
+  service_cidr       = "10.41.16.0/22"
+  vnet_address_space = "10.41.0.0/20"
 
   # oms_log_analytics_workspace_id = module.log_analytics.workspace_id
 
@@ -94,5 +95,5 @@ module "aks_main" {
       node_labels         = {}
       taints              = []
     }
-  } 
+  }
 }

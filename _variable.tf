@@ -19,10 +19,14 @@ variable "prefix" {
 variable "k8s_version" {
   description = "(Optional) Version of Kubernetes specified when creating the AKS managed cluster. If not specified, the latest recommended version will be used at provisioning time (but won't auto-upgrade)."
   type        = string
-  default     = "1.26"
+  default     = "1.28.5"
 }
 
 variable "vnet_subnet_id" {
+  type = string
+}
+
+variable "vnet_address_space" {
   type = string
 }
 
@@ -83,7 +87,7 @@ variable "default_tags" {
   description = "A map to add common tags to all the resources"
   default = {
     "Scope" : "AKS"
-    "CreatedBy" : "Terraform" 
+    "CreatedBy" : "Terraform"
   }
 }
 
@@ -131,23 +135,23 @@ variable "create_additional_node_pool" {
   default = false
 }
 
-variable "ingress_application_gateway" {
-  description = "Specifies the Application Gateway Ingress Controller addon configuration."
-  type = object({
-    enabled      = bool
-    gateway_id   = string
-    gateway_name = string
-    subnet_cidr  = string
-    subnet_id    = string
-  })
-  default = {
-    enabled      = false
-    gateway_id   = null
-    gateway_name = null
-    subnet_cidr  = null
-    subnet_id    = null
-  }
-}
+# variable "ingress_application_gateway" {
+#   description = "Specifies the Application Gateway Ingress Controller addon configuration."
+#   type = object({
+#     enabled      = bool
+#     gateway_id   = string
+#     gateway_name = string
+#     subnet_cidr  = string
+#     subnet_id    = string
+#   })
+#   default = {
+#     enabled      = false
+#     gateway_id   = null
+#     gateway_name = null
+#     subnet_cidr  = null
+#     subnet_id    = null
+#   }
+# }
 
 variable "load_balancer_profile_enabled" {
   type        = bool
@@ -183,7 +187,7 @@ variable "outbound_type" {
 variable "aks_pod_cidr" {
   description = "CIDR used by pods when network plugin is set to `kubenet`."
   type        = string
-  default     = "172.17.0.0/16"
+  default     = "10.41.22.0/22"
 }
 
 variable "default_node_pool" {
@@ -247,6 +251,59 @@ variable "key_vault_secrets_provider" {
   type = object({
     secret_rotation_enabled  = optional(bool, false)
     secret_rotation_interval = optional(string, "")
+  })
+  default = null
+}
+
+variable "private_cluster_enabled" {
+  description = "Configure AKS as a Private Cluster: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_cluster_enabled"
+  type        = bool
+  default     = true
+}
+
+variable "private_dns_zone_type" {
+  type        = string
+  default     = "System"
+  description = <<EOD
+- "Custom" : You will have to deploy a private Dns Zone on your own and pass the id with <private_dns_zone_id> variable
+If this settings is used, aks user assigned identity will be "userassigned" instead of "systemassigned"
+and the aks user must have "Private DNS Zone Contributor" role on the private DNS Zone
+- "System" : AKS will manage the private zone and create it in the same resource group as the Node Resource Group
+- "None" : In case of None you will need to bring your own DNS server and set up resolving, otherwise cluster will have issues after provisioning.
+EOD
+}
+
+variable "private_dns_zone_id" {
+  type        = string
+  default     = null
+  description = "Id of the private DNS Zone when <private_dns_zone_type> is custom"
+}
+
+variable "node_resource_group" {
+  description = "Name of the resource group in which to put AKS nodes. If null default to MC_<AKS RG Name>"
+  type        = string
+  default     = null
+}
+
+variable "oidc_issuer_enabled" {
+  description = "Whether to enable OpenID Connect issuer or not. https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer"
+  type        = bool
+  default     = false
+}
+
+variable "http_application_routing_enabled" {
+  description = "Whether HTTP Application Routing is enabled."
+  type        = bool
+  default     = false
+}
+
+variable "aks_http_proxy_settings" {
+  description = "AKS HTTP proxy settings. URLs must be in format `http(s)://fqdn:port/`. When setting the `no_proxy_url_list` parameter, the AKS Private Endpoint domain name and the AKS VNet CIDR must be added to the URLs list."
+  type = object({
+    http_proxy_url    = optional(string)
+    https_proxy_url   = optional(string)
+    no_proxy_url_list = optional(list(string), [])
+    trusted_ca        = optional(string)
   })
   default = null
 }

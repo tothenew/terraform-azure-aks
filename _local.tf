@@ -24,4 +24,17 @@ locals {
   }
 
   default_node_pool = merge(local.default_agent_profile, var.default_node_pool)
+
+  private_dns_zone = var.private_dns_zone_type == "Custom" ? var.private_dns_zone_id : var.private_dns_zone_type
+
+  default_no_proxy_url_list = [
+    var.vnet_address_space,
+    var.aks_pod_cidr,
+    var.service_cidr,
+    "localhost",
+    "konnectivity",
+    "127.0.0.1",       # Localhost
+    "168.63.129.16",   # Azure platform global VIP (https://learn.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16)
+    "169.254.169.254", # Azure Instance Metadata Service (IMDS)
+  ]
 }
