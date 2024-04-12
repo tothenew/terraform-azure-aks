@@ -6,6 +6,9 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   kubernetes_version               = var.k8s_version
   sku_tier                         = var.sku_tier
   support_plan                     = var.support_plan
+  local_account_disabled           = var.local_account_disabled
+  node_os_channel_upgrade          = var.node_os_channel_upgrade
+  open_service_mesh_enabled        = var.open_service_mesh_enabled
   automatic_channel_upgrade        = var.automatic_channel_upgrade
   azure_policy_enabled             = var.azure_policy_enabled
   private_cluster_enabled          = var.private_cluster_enabled
@@ -62,8 +65,15 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     type = "SystemAssigned"
   }
 
-  oms_agent {
-    log_analytics_workspace_id = var.oms_log_analytics_workspace_id
+  # oms_agent {
+  #   log_analytics_workspace_id = var.oms_log_analytics_workspace_id != "" ? var.oms_log_analytics_workspace_id : data.azurerm_log_analytics_workspace.example.workspace_id 
+  # }
+
+  dynamic "oms_agent" {
+    for_each = var.oms_log_analytics_workspace_id != "" ? [1] : []
+    content {
+      log_analytics_workspace_id = var.oms_log_analytics_workspace_id
+    }
   }
 
   network_profile {
@@ -75,9 +85,19 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     load_balancer_sku = var.load_balancer_sku
     outbound_type     = var.outbound_type
     pod_cidr          = var.network_plugin == "kubenet" ? var.aks_pod_cidr : null
-    load_balancer_profile {
-      managed_outbound_ip_count = var.load_balancer_profile_managed_outbound_ip_count
-      outbound_ip_prefix_ids    = var.load_balancer_profile_outbound_ip_prefix_ids
+    dynamic "load_balancer_profile" {
+      for_each = var.load_balancer_profile_enabled && var.load_balancer_sku == "standard" ? [
+        "load_balancer_profile"
+      ] : []
+
+      content {
+        idle_timeout_in_minutes     = var.load_balancer_profile_idle_timeout_in_minutes
+        managed_outbound_ip_count   = var.load_balancer_profile_managed_outbound_ip_count
+        managed_outbound_ipv6_count = var.load_balancer_profile_managed_outbound_ipv6_count
+        outbound_ip_address_ids     = var.load_balancer_profile_outbound_ip_address_ids
+        outbound_ip_prefix_ids      = var.load_balancer_profile_outbound_ip_prefix_ids
+        outbound_ports_allocated    = var.load_balancer_profile_outbound_ports_allocated
+      }
     }
   }
 
@@ -88,17 +108,6 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
       secret_rotation_interval = key_vault_secrets_provider.value.secret_rotation_interval
     }
   }
-
-
-  # dynamic "ingress_application_gateway" {
-  #   for_each = try(var.ingress_application_gateway.gateway_id, null) == null ? [] : [1]
-
-  #   content {
-  #     gateway_id  = var.ingress_application_gateway.gateway_id
-  #     subnet_cidr = var.ingress_application_gateway.subnet_cidr
-  #     subnet_id   = var.ingress_application_gateway.subnet_id
-  #   }
-  # }
 
   dynamic "http_proxy_config" {
     for_each = var.aks_http_proxy_settings != null ? ["enabled"] : []

@@ -1,7 +1,6 @@
 variable "resource_group" {
   description = "(Required) Specifies the Resource Group where the Managed Kubernetes Cluster should exist."
   type        = string
-  default     = "test"
 }
 
 variable "location" {
@@ -13,7 +12,7 @@ variable "location" {
 variable "prefix" {
   description = "(Required) Base name used by resources (cluster name, main service and others)."
   type        = string
-  default     = "new_kubernetes"
+  default     = "SpecialChem_DevK8s"
 }
 
 variable "k8s_version" {
@@ -58,7 +57,7 @@ variable "azure_policy_enabled" {
 }
 variable "dns_prefix" {
   type    = string
-  default = "k8stest"
+  default = "specialDevk8s"
 }
 variable "sku_tier" {
   description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free and Paid (which includes the Uptime SLA). Defaults to Free."
@@ -86,8 +85,7 @@ variable "default_tags" {
   type        = map(string)
   description = "A map to add common tags to all the resources"
   default = {
-    "Scope" : "AKS"
-    "CreatedBy" : "Terraform"
+    "CreatedBy" : "TTN"
   }
 }
 
@@ -95,7 +93,7 @@ variable "common_tags" {
   type        = map(string)
   description = "A map to add common tags to all the resources"
   default = {
-    Project    = "AKS"
+    Project    = "SpecialChem"
     Managed-By = "TTN"
   }
 }
@@ -136,26 +134,9 @@ variable "create_additional_node_pool" {
 }
 
 variable "oms_log_analytics_workspace_id" {
-  type = string
+  type    = string
+  default = ""
 }
-
-# variable "ingress_application_gateway" {
-#   description = "Specifies the Application Gateway Ingress Controller addon configuration."
-#   type = object({
-#     enabled      = bool
-#     gateway_id   = string
-#     gateway_name = string
-#     subnet_cidr  = string
-#     subnet_id    = string
-#   })
-#   default = {
-#     enabled      = false
-#     gateway_id   = null
-#     gateway_name = null
-#     subnet_cidr  = null
-#     subnet_id    = null
-#   }
-# }
 
 variable "load_balancer_profile_enabled" {
   type        = bool
@@ -167,7 +148,18 @@ variable "load_balancer_profile_enabled" {
 variable "load_balancer_sku" {
   type        = string
   default     = "standard"
-  description = "(Optional) Specifies the SKU of the Load Balancer used for this Kubernetes Cluster. Possible values are `basic` and `standard`. Defaults to `standard`."
+  description = "(Optional) Specifies the SKU of the Load Balancer used for this Kubernetes Cluster. Possible values are `basic` and `standard`. Defaults to `standard`. Changing this forces a new kubernetes cluster to be created."
+
+  validation {
+    condition     = contains(["basic", "standard"], var.load_balancer_sku)
+    error_message = "Possible values are `basic` and `standard`"
+  }
+}
+
+variable "load_balancer_profile_idle_timeout_in_minutes" {
+  type        = number
+  default     = 30
+  description = "(Optional) Desired outbound flow idle timeout in minutes for the cluster load balancer. Must be between `4` and `120` inclusive."
 }
 
 variable "load_balancer_profile_managed_outbound_ip_count" {
@@ -182,6 +174,23 @@ variable "load_balancer_profile_outbound_ip_prefix_ids" {
   description = "(Optional) The ID of the outbound Public IP Address Prefixes which should be used for the cluster load balancer."
 }
 
+variable "load_balancer_profile_outbound_ip_address_ids" {
+  type        = set(string)
+  default     = null
+  description = "(Optional) The ID of the Public IP Addresses which should be used for outbound communication for the cluster load balancer."
+}
+
+variable "load_balancer_profile_managed_outbound_ipv6_count" {
+  type        = number
+  default     = null
+  description = "(Optional) The desired number of IPv6 outbound IPs created and managed by Azure for the cluster load balancer. Must be in the range of `1` to `100` (inclusive). The default value is `0` for single-stack and `1` for dual-stack. Note: managed_outbound_ipv6_count requires dual-stack networking. To enable dual-stack networking the Preview Feature Microsoft.ContainerService/AKS-EnableDualStack needs to be enabled and the Resource Provider re-registered, see the documentation for more information. https://learn.microsoft.com/en-us/azure/aks/configure-kubenet-dual-stack?tabs=azure-cli%2Ckubectl#register-the-aks-enabledualstack-preview-feature"
+}
+
+variable "load_balancer_profile_outbound_ports_allocated" {
+  type        = number
+  default     = 0
+  description = "(Optional) Number of desired SNAT port for each VM in the clusters load balancer. Must be between `0` and `64000` inclusive. Defaults to `0`"
+}
 variable "outbound_type" {
   description = "The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are `loadBalancer` and `userDefinedRouting`."
   type        = string
@@ -245,11 +254,6 @@ variable "auto_scaler_profile" {
   default = null
 }
 
-# variable "oms_log_analytics_workspace_id" {
-#   description = "The ID of the Log Analytics Workspace used to send OMS logs"
-#   type        = string
-# }
-
 variable "key_vault_secrets_provider" {
   description = "Enable AKS built-in Key Vault secrets provider. If enabled, an identity is created by the AKS itself and exported from this module."
   type = object({
@@ -260,7 +264,7 @@ variable "key_vault_secrets_provider" {
 }
 
 variable "private_cluster_enabled" {
-  description = "Configure AKS as a Private Cluster: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster#private_cluster_enabled"
+  description = "Configure AKS as a Private Cluster."
   type        = bool
   default     = true
 }
@@ -290,7 +294,7 @@ variable "node_resource_group" {
 }
 
 variable "oidc_issuer_enabled" {
-  description = "Whether to enable OpenID Connect issuer or not. https://learn.microsoft.com/en-us/azure/aks/use-oidc-issuer"
+  description = "Whether to enable OpenID Connect issuer or not."
   type        = bool
   default     = false
 }
@@ -310,4 +314,22 @@ variable "aks_http_proxy_settings" {
     trusted_ca        = optional(string)
   })
   default = null
+}
+
+variable "local_account_disabled" {
+  type        = bool
+  default     = null
+  description = "(Optional) - If `true` local accounts will be disabled. Defaults to `false`."
+}
+
+variable "node_os_channel_upgrade" {
+  type        = string
+  default     = null
+  description = " (Optional) The upgrade channel for this Kubernetes Cluster Nodes' OS Image. Possible values are `Unmanaged`, `SecurityPatch`, `NodeImage` and `None`."
+}
+
+variable "open_service_mesh_enabled" {
+  type        = bool
+  default     = null
+  description = "Is Open Service Mesh enabled?"
 }
