@@ -26,29 +26,29 @@ module "log_analytics" {
   }
 }
 
-data "azurerm_subscription" "subscription" {}
+# data "azurerm_subscription" "subscription" {}
 
-resource "azurerm_monitor_diagnostic_setting" "diagnostic_settings" {
-  name                       = "devspeciattest-activity-logs"
-  target_resource_id         = data.azurerm_subscription.subscription.id
-  log_analytics_workspace_id = module.log_analytics.workspace_id
+# resource "azurerm_monitor_diagnostic_setting" "diagnostic_settings" {
+#   name                       = "devspeciattest-activity-logs"
+#   target_resource_id         = data.azurerm_subscription.subscription.id
+#   log_analytics_workspace_id = module.log_analytics.workspace_id
 
-  enabled_log {
-    category = "Administrative"
-  }
+#   enabled_log {
+#     category = "Administrative"
+#   }
 
-  enabled_log {
-    category = "Alert"
-  }
+#   enabled_log {
+#     category = "Alert"
+#   }
 
-  enabled_log {
-    category = "Policy"
-  }
+#   enabled_log {
+#     category = "Policy"
+#   }
 
-  enabled_log {
-    category = "Security"
-  }
-}
+#   enabled_log {
+#     category = "Security"
+#   }
+# }
 
 module "vnet" {
   source              = "git::https://github.com/tothenew/terraform-azure-vnet.git"
@@ -78,7 +78,7 @@ module "aks_main" {
   service_cidr       = "10.41.16.0/22"
   vnet_address_space = "10.41.0.0/20"
 
-  # oms_log_analytics_workspace_id = module.log_analytics.workspace_id
+  oms_log_analytics_workspace_id = module.log_analytics.workspace_id
 
 
   create_additional_node_pool = true

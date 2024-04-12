@@ -135,6 +135,10 @@ variable "create_additional_node_pool" {
   default = false
 }
 
+variable "oms_log_analytics_workspace_id" {
+  type = string
+}
+
 # variable "ingress_application_gateway" {
 #   description = "Specifies the Application Gateway Ingress Controller addon configuration."
 #   type = object({
