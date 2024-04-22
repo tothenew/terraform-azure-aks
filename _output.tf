@@ -9,3 +9,8 @@ output "cluster_name" {
   value       = azurerm_kubernetes_cluster.aks_cluster.name
 }
 
+output "cluster_id" {
+  description = "Describe the Cluster ID"
+  value = azurerm_kubernetes_cluster.aks_cluster.id 
+}
+
