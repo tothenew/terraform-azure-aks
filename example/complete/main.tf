@@ -1,29 +1,40 @@
-module "aks_main" {
+provider "azurerm" {
+  features {}
+}
 
-  source                  = "git::https://https://github.com/tothenew/terraform-azure-aks.git?ref=aks-v1"
-  resource_group          = "RG_for_AKS"
-  location                = "eastus2"
-  vm_size                 = "Standard_DS2_v2"
-  virtual_network_address = "10.0.0.0/8"
-  subnet_address          = "10.0.1.0/16"
+resource "azurerm_resource_group" "rg" {
+  name     = "aks-test-demo"
+  location = "Central India"
+}
 
-  create_additional_node_pool = true
+module "vnet" {
+  source              = "git::https://github.com/tothenew/terraform-azure-vnet.git"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  address_space       = "10.41.0.0/20"
 
-  # if create_additional_node_pool = true then Add node pool configurations
+  virtual_network_peering = false
 
-  additional_node_pools = {
-
-    "qa" = {
-      vm_size             = "Standard_DS2_v2"
-      os_disk_size_gb     = 52
-      enable_auto_scaling = true
-      availability_zones  = []
-      node_count          = 1
-      min_count           = 1
-      max_count           = 10
-      max_pods            = 110
-      node_labels         = {}
-      taints              = []
+  subnets = {
+    "aks_subnet" = {
+      address_prefixes           = ["10.41.1.0/24"]
+      associate_with_route_table = false
+      is_natgateway              = false
+      is_nsg                     = true
+      service_delegation         = false
     }
   }
+}
+
+module "aks_main" {
+
+  source             = "../.."
+  resource_group     = azurerm_resource_group.rg.name
+  location           = azurerm_resource_group.rg.location
+  vnet_subnet_id     = module.vnet.subnet_ids["aks_subnet"]
+  service_cidr       = "10.41.16.0/22"
+  vnet_address_space = "10.41.0.0/20"
+  aks_pod_cidr       = "10.41.22.0/22"
+
+  create_additional_node_pool = false
 }
